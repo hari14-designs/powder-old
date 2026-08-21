@@ -317,7 +317,7 @@
                 <ul>
                     <li><a href="about.html#faq">FAQs & Usage</a></li>
                     <li><a href="#">Shipping Policy</a></li>
-                    <li><a href="admin.html" style="font-weight: bold; color: var(--primary);"><i class="fa-solid fa-gears"></i> Admin Portal</a></li>
+                    <li><a href="#">Terms & Conditions</a></li>
                 </ul>
             </div>
             
@@ -454,8 +454,55 @@
         function handlePlaceOrder(e) {
             e.preventDefault();
 
-            // Form validation passed, show success modal
             const mockOrderId = 'FR-' + Math.floor(100000 + Math.random() * 900000);
+            
+            // Collect order details
+            const customerName = document.getElementById('ship-name').value.trim();
+            const customerEmail = document.getElementById('ship-email').value.trim();
+            const customerPhone = document.getElementById('ship-phone').value.trim();
+            const customerAddress = document.getElementById('ship-address').value.trim();
+            const customerCity = document.getElementById('ship-city').value.trim();
+            const customerPin = document.getElementById('ship-pin').value.trim();
+            
+            // Get selected payment option
+            const activePaymentCard = document.querySelector('.payment-option-card.active');
+            const paymentType = activePaymentCard ? activePaymentCard.getAttribute('data-type') : 'upi';
+            
+            let paymentLabel = 'UPI / QR Code';
+            let orderStatus = 'Paid (UPI)';
+            if (paymentType === 'card') {
+                paymentLabel = 'Credit/Debit Card';
+                orderStatus = 'Paid (Card)';
+            } else if (paymentType === 'cod') {
+                paymentLabel = 'Cash on Delivery';
+                orderStatus = 'Pending (COD)';
+            }
+
+            const subtotal = getCartTotal();
+            const finalTotal = discountMultiplier < 1.0 ? Math.round(subtotal * discountMultiplier) : subtotal;
+
+            const newOrder = {
+                orderId: mockOrderId,
+                date: new Date().toLocaleString(),
+                customer: {
+                    name: customerName,
+                    email: customerEmail,
+                    phone: customerPhone,
+                    address: `${customerAddress}, ${customerCity} - ${customerPin}`
+                },
+                items: [...cart],
+                subtotal: subtotal,
+                total: finalTotal,
+                paymentMethod: paymentLabel,
+                status: orderStatus
+            };
+
+            // Save to LocalStorage database
+            let orders = JSON.parse(localStorage.getItem('fruitingo_orders')) || [];
+            orders.push(newOrder);
+            localStorage.setItem('fruitingo_orders', JSON.stringify(orders));
+
+            // Form validation passed, show success modal
             document.getElementById('success-order-id').textContent = mockOrderId;
 
             const modal = document.getElementById('success-modal');
